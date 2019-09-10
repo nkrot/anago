@@ -8,6 +8,12 @@ from collections import Counter
 import numpy as np
 from keras.utils import Sequence, get_file
 
+# holds some default values that are reused across different modules
+MODEL_COMPONENTS = {
+    'weights_file'      : 'weights.h5',
+    'params_file'       : 'params.json',
+    'preprocessor_file' : 'preprocessor.pickle'
+}
 
 def download(url):
     """Download a trained weights, config and preprocessor.
@@ -17,9 +23,9 @@ def download(url):
     """
     filepath = get_file(fname='tmp.zip', origin=url, extract=True)
     base_dir = os.path.dirname(filepath)
-    weights_file = os.path.join(base_dir, 'weights.h5')
-    params_file = os.path.join(base_dir, 'params.json')
-    preprocessor_file = os.path.join(base_dir, 'preprocessor.pickle')
+    weights_file = os.path.join(base_dir, MODEL_COMPONENTS['weights_file'])
+    params_file = os.path.join(base_dir, MODEL_COMPONENTS['params_file'])
+    preprocessor_file = os.path.join(base_dir, MODEL_COMPONENTS['preprocessor_file'])
 
     return weights_file, params_file, preprocessor_file
 
