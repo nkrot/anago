@@ -42,7 +42,7 @@ def train(model_dir,
     # Check paths we were given
     for fpath in training_file:
         if not os.path.isfile(fpath):
-            print("Training file not found {}".format(fpath), file=sys.stderr)
+            print("Training file not found: {}".format(fpath), file=sys.stderr)
             sys.exit(13)
 
     x_train = []; y_train = []
