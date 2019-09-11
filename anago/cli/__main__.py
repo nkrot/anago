@@ -3,10 +3,12 @@ import sys
 import plac
 import inspect
 
-from .train import train
+from .analyse import analyse
 from .evaluate import evaluate
+from .train import train
 
 COMMANDS = {
+    "analyse"  : analyse,
     "evaluate" : evaluate,
     "train"    : train
 }
