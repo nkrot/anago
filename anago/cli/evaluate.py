@@ -5,7 +5,7 @@ import sys
 import plac
 
 from ..utils import load_data_and_labels, MODEL_COMPONENTS
-from ..wrapper import Sequence
+from .common import load_model_from_directory
 
 @plac.annotations(
     model_dir = (
@@ -24,30 +24,13 @@ def evaluate(model_dir,
 
     model_dir = model_dir or '.'
 
-    if not os.path.isdir(model_dir):
-        print("Model directory not found: {}".format(model_dir))
-        sys.exit(10)
-
     # Check paths we were given
     for fpath in test_file:
         if not os.path.isfile(fpath):
             print("Test file not found: {}".format(fpath), file=sys.stderr)
             sys.exit(14)
 
-    model_files = { comp : os.path.join(model_dir, fname)
-                    for comp,fname in MODEL_COMPONENTS.items() }
-
-    ok = True
-    for _,fpath in model_files.items():
-        if not os.path.isfile(fpath):
-            print("Model file not found: {}".format(fpath), file=sys.stderr)
-            ok = False
-    if not ok:
-        sys.exit(15)
-
-    model = Sequence.load(model_files['weights_file'],
-                          model_files['params_file'],
-                          model_files['preprocessor_file'])
+    model = load_model_from_directory(model_dir)
 
     x = []; y_true = []
     for fpath in test_file:
