@@ -91,6 +91,11 @@ Or tagging text on new data:
 }
 ```
 
+Here offsets corresponds to positions of the words in the text and start from 0.
+Please note that `endOffset` if the position of the word *after* the word of interest,
+which allows accessing original words of the text using pythonic list slicing
+`res['words'][beginOffset:endOffset]`
+
 To download a pre-trained model, call `download` function:
 
 ```python
