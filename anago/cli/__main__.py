@@ -6,11 +6,13 @@ import inspect
 from .analyse import analyse
 from .evaluate import evaluate
 from .train import train
+from .cross_validate import cross_validate
 
 COMMANDS = {
-    "analyse"  : analyse,
+    "train"    : train,
     "evaluate" : evaluate,
-    "train"    : train
+    "analyse"  : analyse,
+    "cross-validate" : cross_validate
 }
 
 def main():
