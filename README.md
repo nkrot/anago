@@ -127,6 +127,15 @@ trainer.train(x_train, y_train, x_test, y_test)
 
 For futher details, see [anago/examples/elmo_example.py](https://github.com/Hironsan/anago/blob/master/examples/elmo_example.py).
 
+There is also a limited support for command line interface.
+
+```
+$ anago --help
+$ anago train --help
+$ anago evaluate --help
+$ anago analyse --help
+```
+
 ## Feature Support
 
 anaGo supports following features:
