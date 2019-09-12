@@ -16,6 +16,8 @@ from ..wrapper import Sequence
     training_file = ("Path to training dataset (tsv format)", "positional")
 )
 
+NUMBER_OF_DECIMALS = 4
+
 def cross_validate(folds=10,
                    epochs=15,
                    *training_file):
@@ -64,7 +66,7 @@ def cross_validate(folds=10,
             meth = getattr(seqeval.metrics, methname)
             score_val = meth(y_test, y_pred, **options)
             print("RUN {} SCORE {}: {}".format(idx, methname, score_val))
-            onerun[methname] = round(score_val, 4)
+            onerun[methname] = score_val
 
         all_scores.append(onerun)
 
@@ -75,6 +77,7 @@ def cross_validate(folds=10,
 
     df = pd.DataFrame(all_scores)
     df = df.append(df.agg(['mean', 'std']))
+    df = df.round(NUMBER_OF_DECIMALS = 4)
 
     print("=== Cross Validation Report ===")
     print("Dataset size: {}".format(len(x)))
