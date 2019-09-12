@@ -9,8 +9,7 @@ import seqeval.metrics
 
 from ..utils import load_data_and_labels
 from ..wrapper import Sequence
-
-NUMBER_OF_DECIMALS = 4
+from .common import NUMBER_OF_DECIMALS
 
 @plac.annotations(
     folds  = ("set the number of folds (k in k-fold)", "option", "k", int),

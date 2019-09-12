@@ -5,6 +5,8 @@ import sys
 from ..utils import MODEL_COMPONENTS
 from ..wrapper import Sequence
 
+NUMBER_OF_DECIMALS = 4
+
 def load_model_from_directory(model_dir='.'):
     """
     Load model from given directory. A model is a collection of files
