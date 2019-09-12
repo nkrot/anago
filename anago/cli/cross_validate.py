@@ -3,7 +3,9 @@ import sys
 import plac
 
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import KFold
+import seqeval.metrics
 
 from ..utils import load_data_and_labels
 from ..wrapper import Sequence
@@ -18,27 +20,32 @@ def cross_validate(folds=10,
                    epochs=15,
                    *training_file):
     """
-    Perform k-fold cross validation of the model and report f1 (micro) score
-    for all runs as well as mean and standard deviation.
+    Perform k-fold cross validation of the model and report various scores
+    -- precision, recall, f1 -- for all runs individually as well as mean
+    and standard deviation for every score.
 
-    Note that neither a model will be produced nor test results will be saved.\
+    Note that neither a model nor test results will be saved.\
     """
 
     print(f"Performing cross validation with k={folds}")
 
-    required_metrics = ['f1_micro']
+    required_metrics = {
+        # NOTE: seqeval implementations ignore the options :(
+        'f1_score'        : { 'average' : 'micro' },
+        'precision_score' : { 'average' : 'micro' },
+        'recall_score'    : { 'average' : 'micro' }
+    }
 
     x = []; y = []
     for fpath in training_file:
         bulk = load_data_and_labels(fpath)
         x.extend(bulk[0])
         y.extend(bulk[1])
-        print(type(bulk[0]))
 
     x, y = np.array(x), np.array(y)
 
     kf = KFold(n_splits=folds, shuffle=True)
-    scores = []
+    all_scores = []
 
     for idx,(train_indices,test_indices) in enumerate(kf.split(x)):
         print("Iteration #{}, train/test split sizes: {}/{}".format(
@@ -50,24 +57,28 @@ def cross_validate(folds=10,
         model = Sequence()
         model.fit(x_train, y_train, epochs=epochs)
 
-        scores.append({
-            'f1_micro' : model.score(x_test, y_test)
-            # TODO: add here precision, recall
-        })
+        y_pred = model.predict(x_test)
+
+        onerun = {}
+        for methname,options in required_metrics.items():
+            meth = getattr(seqeval.metrics, methname)
+            score_val = meth(y_test, y_pred, **options)
+            print("RUN {} SCORE {}: {}".format(idx, methname, score_val))
+            onerun[methname] = round(score_val, 4)
+
+        all_scores.append(onerun)
 
     # An example
-    # scores = [{'f1_micro': 0.2952456002101392,  'precision' : 0.98},
-    #           {'f1_micro': 0.24196891191709846, 'precision' : 0.80},
-    #           {'f1_micro': 0.23366013071895422, 'precision' : 0.70}]
+    # all_scores = [{'f1_score': 0.8952, 'precision' : 0.98}, <-- run 0
+    #               {'f1_score': 0.7420, 'precision' : 0.80}, <-- run 1
+    #               {'f1_score': 0.8337, 'precision' : 0.70}]
 
-    for m in required_metrics:
-        values = np.array([onerun.get(m, 0) for onerun in scores])
-        print("{}: {}".format(m, values))
-        print("mean: {}".format(values.mean()))
-        print("std:  {}".format(values.std()))
+    df = pd.DataFrame(all_scores)
+    df = df.append(df.agg(['mean', 'std']))
 
-    # TODO: desired output format (use pandas?)
-    # Include size of dataset, number of folds and training epochs?
-    #           | run #1 | ... | run #N | mean | std |
-    # f1-score  |        |     |        |      |     |
-    # precision |        |     |        |      |     |
+    print("=== Cross Validation Report ===")
+    print("Dataset size: {}".format(len(x)))
+    print("Number of folds: {}".format(folds))
+    print("Number of epochs: {}".format(epochs))
+    print("")
+    print(df)
