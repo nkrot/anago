@@ -77,7 +77,7 @@ def cross_validate(folds=10,
 
     df = pd.DataFrame(all_scores)
     df = df.append(df.agg(['mean', 'std']))
-    df = df.round(NUMBER_OF_DECIMALS = 4)
+    df = df.round(NUMBER_OF_DECIMALS)
 
     print("=== Cross Validation Report ===")
     print("Dataset size: {}".format(len(x)))
