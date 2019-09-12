@@ -26,7 +26,7 @@ if sys.argv[-1] == 'publish':
 required = [
     'Keras>=2.2.0', 'h5py>=2.7.1', 'scikit-learn>=0.19.1',
     'numpy>=1.14.3', 'tensorflow>=1.8.0', 'requests>=2.18.4',
-    'seqeval>=0.0.3', 'plac>=0.9.6'
+    'seqeval>=0.0.3', 'plac>=0.9.6', 'pandas>=0.25.0'
 ]
 
 setup(
