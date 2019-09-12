@@ -19,7 +19,7 @@ from .common import load_model_from_directory, NUMBER_OF_DECIMALS
         "flag", "o"),
     append = (
         "output test dataset with predicted tags appended to corresponding lines"
-        " (tsv format). This mode implied --output.",
+        " (tsv format). This mode implies --output.",
         "flag", "a"),
     test_file = ("path to test dataset (tsv format)", "positional")
 )
