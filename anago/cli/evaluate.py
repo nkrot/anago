@@ -14,10 +14,19 @@ from .common import load_model_from_directory, NUMBER_OF_DECIMALS
         "path to directory where model files are located. "
         "Model files are: {}".format(", ".join(MODEL_COMPONENTS.values())),
         "option", "m"),
+    output = (
+        "output predictions to stdout (tsv format) as well",
+        "flag", "o"),
+    append = (
+        "output test dataset with predicted tags appended to corresponding lines"
+        " (tsv format). This mode implied --output.",
+        "flag", "a"),
     test_file = ("path to test dataset (tsv format)", "positional")
 )
 
 def evaluate(model_dir,
+             output=False,
+             append=False,
              *test_file):
     """
     Evaluate given model on given dataset, computing the following metrics:
@@ -36,6 +45,7 @@ def evaluate(model_dir,
     }
 
     model_dir = model_dir or '.'
+    output = output or append
 
     # Check paths we were given
     for fpath in test_file:
@@ -43,14 +53,13 @@ def evaluate(model_dir,
             print("Test file not found: {}".format(fpath), file=sys.stderr)
             sys.exit(14)
 
-    model = load_model_from_directory(model_dir)
-
     x, y_true = [], []
     for fpath in test_file:
         bulk = load_data_and_labels(fpath)
         x.extend(bulk[0])
         y_true.extend(bulk[1])
 
+    model = load_model_from_directory(model_dir)
     y_pred = model.predict(x)
 
     # TODO: this somewhat repeats the code in cross_validate and can/should
@@ -60,8 +69,17 @@ def evaluate(model_dir,
         scoring_method = getattr(seqeval.metrics, metric_name)
         scores[metric_name] = scoring_method(y_true, y_pred, **options)
 
-    # score = model.score(x, y_true)
+    # output predictions
+    for sent_idx in range(len(x)):
+        if append:
+            sent_words = zip(x[sent_idx], y_true[sent_idx], y_pred[sent_idx])
+        else:
+            sent_words = zip(x[sent_idx], y_pred[sent_idx])
+        for word in sent_words:
+            print("\t".join(word))
+        print()
 
+    # output scores
     print("Dataset size: {}".format(len(y_true)))
     for metric_name in required_metrics.keys():
         print("{}: {}".format(metric_name, round(scores.get(metric_name, 0),
