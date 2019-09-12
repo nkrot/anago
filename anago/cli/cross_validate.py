@@ -10,13 +10,13 @@ import seqeval.metrics
 from ..utils import load_data_and_labels
 from ..wrapper import Sequence
 
+NUMBER_OF_DECIMALS = 4
+
 @plac.annotations(
     folds  = ("set the number of folds (k in k-fold)", "option", "k", int),
     epochs = ("set number of training epochs", "option", "e", int),
     training_file = ("Path to training dataset (tsv format)", "positional")
 )
-
-NUMBER_OF_DECIMALS = 4
 
 def cross_validate(folds=10,
                    epochs=15,
