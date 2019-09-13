@@ -35,15 +35,6 @@ def evaluate(model_dir,
       * recall\
     """
 
-    # TODO: this somewhat repeats the code in cross_validate and can/should
-    #       be dried out.
-    required_metrics = {
-        # NOTE: seqeval implementations ignore the options :(
-        'f1_score'        : { 'average' : 'micro' },
-        'precision_score' : { 'average' : 'micro' },
-        'recall_score'    : { 'average' : 'micro' }
-    }
-
     model_dir = model_dir or '.'
     output = output or append
 
@@ -65,7 +56,7 @@ def evaluate(model_dir,
     # TODO: this somewhat repeats the code in cross_validate and can/should
     #       be dried out.
     scores = {}
-    for metric_name,options in required_metrics.items():
+    for metric_name,options in common.REQUIRED_METRICS.items():
         scoring_method = getattr(seqeval.metrics, metric_name)
         scores[metric_name] = scoring_method(y_true, y_pred, **options)
 
@@ -77,6 +68,6 @@ def evaluate(model_dir,
 
     # output scores
     print("Dataset size: {}".format(len(y_true)))
-    for metric_name in required_metrics.keys():
+    for metric_name in common.REQUIRED_METRICS.keys():
         print("{}: {}".format(metric_name, round(scores.get(metric_name, 0),
                                                  common.NUMBER_OF_DECIMALS)))
