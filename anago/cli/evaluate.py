@@ -6,13 +6,13 @@ import sys
 import plac
 import seqeval.metrics
 
-from ..utils import load_data_and_labels, MODEL_COMPONENTS
-from .common import load_model_from_directory, NUMBER_OF_DECIMALS
+from .. import utils
+from . import common
 
 @plac.annotations(
     model_dir = (
         "path to directory where model files are located. "
-        "Model files are: {}".format(", ".join(MODEL_COMPONENTS.values())),
+        "Model files are: {}".format(", ".join(utils.MODEL_COMPONENTS.values())),
         "option", "m"),
     output = (
         "output predictions to stdout (tsv format) as well",
@@ -55,11 +55,11 @@ def evaluate(model_dir,
 
     x, y_true = [], []
     for fpath in test_file:
-        bulk = load_data_and_labels(fpath)
+        bulk = utils.load_data_and_labels(fpath)
         x.extend(bulk[0])
         y_true.extend(bulk[1])
 
-    model = load_model_from_directory(model_dir)
+    model = common.load_model_from_directory(model_dir)
     y_pred = model.predict(x)
 
     # TODO: this somewhat repeats the code in cross_validate and can/should
@@ -70,17 +70,13 @@ def evaluate(model_dir,
         scores[metric_name] = scoring_method(y_true, y_pred, **options)
 
     # output predictions
-    for sent_idx in range(len(x)):
-        if append:
-            sent_words = zip(x[sent_idx], y_true[sent_idx], y_pred[sent_idx])
-        else:
-            sent_words = zip(x[sent_idx], y_pred[sent_idx])
-        for word in sent_words:
-            print("\t".join(word))
-        print()
+    if append:
+        common.print_data_and_labels(x, y_true, y_pred)
+    else:
+        common.print_data_and_labels(x, y_pred)
 
     # output scores
     print("Dataset size: {}".format(len(y_true)))
     for metric_name in required_metrics.keys():
         print("{}: {}".format(metric_name, round(scores.get(metric_name, 0),
-                                                 NUMBER_OF_DECIMALS)))
+                                                 common.NUMBER_OF_DECIMALS)))
