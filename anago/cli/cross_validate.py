@@ -43,8 +43,9 @@ def cross_validate(folds=10,
     all_scores = []
 
     for idx,(train_indices,test_indices) in enumerate(kf.split(x)):
+        run_idx = idx+1
         print("Iteration #{}, train/test split sizes: {}/{}".format(
-            idx, len(train_indices), len(test_indices)))
+            run_idx, len(train_indices), len(test_indices)))
 
         x_train, y_train = x[train_indices], y[train_indices]
         x_test,  y_test  = x[test_indices],  y[test_indices]
@@ -58,17 +59,18 @@ def cross_validate(folds=10,
         for methname,options in common.REQUIRED_METRICS.items():
             meth = getattr(seqeval.metrics, methname)
             score_val = meth(y_test, y_pred, **options)
-            print("RUN {} SCORE {}: {}".format(idx, methname, score_val))
+            print("RUN {} SCORE {}: {}".format(run_idx, methname, score_val))
             onerun[methname] = score_val
 
         all_scores.append(onerun)
 
     # An example
-    # all_scores = [{'f1_score': 0.8952, 'precision' : 0.98}, <-- run 0
-    #               {'f1_score': 0.7420, 'precision' : 0.80}, <-- run 1
-    #               {'f1_score': 0.8337, 'precision' : 0.70}]
+    # all_scores = [{ 'f1_score': 0.8952, 'precision' : 0.98 }, <-- 1st run
+    #               { 'f1_score': 0.7420, 'precision' : 0.80 }, <-- 2nd run
+    #               { 'f1_score': 0.8337, 'precision' : 0.70 }] <-- 3rd run
 
     df = pd.DataFrame(all_scores)
+    df.index += 1
     df = df.append(df.agg(['mean', 'std']))
     df = df.round(common.NUMBER_OF_DECIMALS)
 
