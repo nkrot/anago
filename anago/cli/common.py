@@ -7,6 +7,13 @@ from ..wrapper import Sequence
 
 NUMBER_OF_DECIMALS = 4
 
+REQUIRED_METRICS = {
+    # NOTE: seqeval implementations ignore the options :(
+    'f1_score'        : { 'average' : 'micro' },
+    'precision_score' : { 'average' : 'micro' },
+    'recall_score'    : { 'average' : 'micro' }
+}
+
 def load_model_from_directory(model_dir='.'):
     """
     Load model from given directory. A model is a collection of files
