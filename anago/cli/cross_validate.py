@@ -9,7 +9,7 @@ import seqeval.metrics
 
 from ..utils import load_data_and_labels
 from ..wrapper import Sequence
-from .common import NUMBER_OF_DECIMALS
+from . import common
 
 @plac.annotations(
     folds  = ("set the number of folds (k in k-fold)", "option", "k", int),
@@ -30,12 +30,6 @@ def cross_validate(folds=10,
 
     print(f"Performing cross validation with k={folds}")
 
-    required_metrics = {
-        # NOTE: seqeval implementations ignore the options :(
-        'f1_score'        : { 'average' : 'micro' },
-        'precision_score' : { 'average' : 'micro' },
-        'recall_score'    : { 'average' : 'micro' }
-    }
 
     x = []; y = []
     for fpath in training_file:
@@ -61,7 +55,7 @@ def cross_validate(folds=10,
         y_pred = model.predict(x_test)
 
         onerun = {}
-        for methname,options in required_metrics.items():
+        for methname,options in common.REQUIRED_METRICS.items():
             meth = getattr(seqeval.metrics, methname)
             score_val = meth(y_test, y_pred, **options)
             print("RUN {} SCORE {}: {}".format(idx, methname, score_val))
@@ -76,7 +70,7 @@ def cross_validate(folds=10,
 
     df = pd.DataFrame(all_scores)
     df = df.append(df.agg(['mean', 'std']))
-    df = df.round(NUMBER_OF_DECIMALS)
+    df = df.round(common.NUMBER_OF_DECIMALS)
 
     print("=== Cross Validation Report ===")
     print("Dataset size: {}".format(len(x)))
