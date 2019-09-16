@@ -7,12 +7,15 @@ from .analyse import analyse
 from .evaluate import evaluate
 from .train import train
 from .cross_validate import cross_validate
+from .config import config
+
 
 COMMANDS = {
     "train"    : train,
     "evaluate" : evaluate,
     "analyse"  : analyse,
-    "cross-validate" : cross_validate
+    "cross-validate" : cross_validate,
+    "config"   : config
 }
 
 def main():
