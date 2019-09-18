@@ -5,7 +5,7 @@ from anago.utils import NERSequence
 
 
 class Trainer(object):
-    """A trainer that train the model.
+    """A trainer that trains the model.
 
     Attributes:
         _model: Model.
