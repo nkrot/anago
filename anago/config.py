@@ -220,17 +220,17 @@ class Config(object):
             self.parser = self._create_config_parser()
 
             self.parser.read(fpath)
-            self._validate_configuration(self.parser)
+            self._parse_configuration(self.parser)
 
         else:
             print("Configuration file not found: {}".format(fpath), file=sys.stderr)
             exit(20)
 
-    def _validate_configuration(self, cfg):
+    def _parse_configuration(self, cfg):
         """
-        Validate configuration:
+        Parse and validate configuration:
         - check that all section names and parameter names are valid
-        - user config is allowed to contain less section
+        - user config is allowed to contain less sections
         - perform type conversion
         """
 
@@ -238,7 +238,7 @@ class Config(object):
         for sectname in cfg.sections():
             _sname = sectname.lower()
             if _sname in __class__.allitems.keys():
-                ok = self._validate_configuration_section(cfg, sectname) and ok
+                ok = self._parse_configuration_section(cfg, sectname) and ok
             else:
                 ok = False
                 msg = "Invalid section [{}] in configuration file: '{}'"
@@ -249,9 +249,9 @@ class Config(object):
 
         return ok
 
-    def _validate_configuration_section(self, cfg, sectionname):
+    def _parse_configuration_section(self, cfg, sectionname):
         """
-        Validate parameters in given section
+        Retrieve and validate parameters in given section.
         """
 
         ok = True
