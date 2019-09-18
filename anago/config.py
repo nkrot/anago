@@ -111,8 +111,23 @@ class Config(object):
                 "use_crf" : (
                     "whether to use or not CRF layer.",
                     "yes", None, 'bool', [True, False]),
-                #TODO#"fc_dim" : ("ufo", "defaultvalue", "examplevalue", type, choices)
-            })]
+                "fc_dim" : (
+                    "the number of units in Dense layer before CRF layer.",
+                    100, None, 'int'),
+                "use_glove_emb" : (
+                    "use pretrained GloVe embeddings (path to the file should be configured"
+                    " elsewere)",
+                    "no", None, 'bool')
+            })],
+
+        "glove" : [
+            "GloVe embeddings",
+            OrderedDict({
+                "path" : (
+                    "path to the file with GloVe embeddings",
+                    None, "/path/to/glove.6B.100d.txt")
+            })
+        ]
     })
 
     type_converters = {
