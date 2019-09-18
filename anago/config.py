@@ -24,15 +24,15 @@ class Config(object):
                     ".", "../path/to/my/datadir"),
                 "train_data" : (
                     "path to a training dataset (one file only).",
-                    None, "%(data_dir)s/train.txt"),
+                    None, "%(data_dir)s/train.txt", 'strlist'),
                 "valid_data" : (
                     "path to validation dataset. for training: keep this parameter"
                     " in config file but leave the value empty is you dont want to use"
                     " validation dataset when training.",
-                    None, "%(data_dir)s/valid.txt"),
-                "test_data"  : (
+                    None, "%(data_dir)s/valid.txt", 'strlist'),
+                "test_data" : (
                     "path to test dataset.",
-                    None, "%(data_dir)s/test.txt")
+                    None, "%(data_dir)s/test.txt", 'strlist')
             })],
 
         "model files" : [
@@ -118,7 +118,8 @@ class Config(object):
         # supported by configparser.ConfigParser
         'int'   : 'getint',
         'float' : 'getfloat',
-        'bool'  : 'getboolean'
+        'bool'  : 'getboolean',
+        'strlist' : 'getstrlist'
     }
 
     @classmethod
@@ -160,12 +161,23 @@ class Config(object):
         if fpath is not None:
             self._load_from_file(fpath)
 
+    # def __getitem__(self, k):
+    #     return "getting k"
+
+    def get(self, *args):
+        # TODO: should retrieve from my own storage (that also contains type-converted
+        # values and maybe some defaults like MODEL_COMPONENTS)
+        s,p = args
+        #return self.parser[s][p]
+        return self.parser.get(s,p)
+
     def _create_config_parser(self):
         parser = configparser.ConfigParser(
             allow_no_value = True,
-            empty_lines_in_values = False,
+            empty_lines_in_values = True,
             comment_prefixes = ('#'),
-            inline_comment_prefixes = ('#')
+            inline_comment_prefixes = ('#'),
+            converters = { 'strlist' : self._get_string_list }
         )
 
         # ignore extra whitespace around section name (inside [])
@@ -177,6 +189,13 @@ class Config(object):
         })
 
         return parser
+
+    def _get_string_list(self, s):
+        """
+        Recognize a comma-separated list in given string
+        """
+        lst = [fname.rstrip(', ') for fname in re.compile('\s*,\s+').split(s)]
+        return lst
 
     def _load_from_file(self, fpath):
         self.filepath = None
@@ -224,9 +243,20 @@ class Config(object):
         valid_params = __class__.allitems[sectionname.lower()][1]
         for pname,pval in cfg[sectionname].items():
             if pname in valid_params:
-                print("{}/{} ({})".format(pname, pval, type(pval)))
-                print("..is known")
-                print(valid_params[pname])
+                new_pval = pval
+                if len(valid_params[pname]) > 3 and valid_params[pname][3] is not None:
+                    converter = __class__.type_converters[valid_params[pname][3]]
+                    new_pval = getattr(cfg[sectionname], converter)(pname)
+
+                if len(valid_params[pname]) > 4:
+                    choices = valid_params[pname][4]
+                    if new_pval not in choices:
+                        ok = False
+                        msg = "Error in file {} in section '{}': invalid value of parameter" \
+                              " '{}': must be {} but got '{}'"
+                        print(msg.format(self.filepath, sectionname, pname, choices, new_pval),
+                              file=sys.stdout)
+
 
             else:
                 ok = False
