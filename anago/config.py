@@ -132,9 +132,9 @@ class Config(object):
 
     type_converters = {
         # supported by configparser.ConfigParser
-        'int'   : 'getint',
-        'float' : 'getfloat',
-        'bool'  : 'getboolean',
+        'int'     : 'getint',
+        'float'   : 'getfloat',
+        'bool'    : 'getboolean',
         'strlist' : 'getstrlist'
     }
 
@@ -173,19 +173,32 @@ class Config(object):
             print("")
 
     def __init__(self, fpath=None):
-        print("Loading file: {}".format(fpath))
+        # our own structure to store parameters and their values
+        self.params = {}
+
         if fpath is not None:
             self._load_from_file(fpath)
 
-    # def __getitem__(self, k):
-    #     return "getting k"
-
     def get(self, *args):
+        """
+        TODO: add good description with examples &&&
+        Look for given key in given section or, if section not give, look in all sections
+        If several keys exist, return a list of values
+        Examples:
+          get(section, param)
+          get(param)
+        """
         # TODO: should retrieve from my own storage (that also contains type-converted
         # values and maybe some defaults like MODEL_COMPONENTS)
-        s,p = args
-        #return self.parser[s][p]
-        return self.parser.get(s,p)
+        if len(args) == 2:
+            val = self.params.get(args[0],{}).get(args[1], None)
+        elif len(args) == 1:
+            val = [sparams[args[0]] for sparams in self.params.values() if args[0] in sparams]
+            if len(val) == 0:
+                val = None
+            elif len(val) == 1:
+                val = val[0]
+        return val
 
     def _create_config_parser(self):
         parser = configparser.ConfigParser(
@@ -208,7 +221,12 @@ class Config(object):
 
     def _get_string_list(self, s):
         """
-        Recognize a comma-separated list in given string
+        Recognize a comma-separated list (of strings) in given string.
+        Depending on how config parser is configures, the list can span over
+        multiple lines.
+
+        Example: item1, item2,
+                 item3 , item4
         """
         lst = [fname.rstrip(', ') for fname in re.compile('\s*,\s+').split(s)]
         return lst
@@ -256,23 +274,31 @@ class Config(object):
 
         ok = True
 
-        valid_params = __class__.allitems[sectionname.lower()][1]
+        _sectionname = sectionname.lower()
+        valid_params = __class__.allitems[_sectionname][1]
+
         for pname,pval in cfg[sectionname].items():
             if pname in valid_params:
                 new_pval = pval
+
+                # given value needs to be converted to given type
                 if len(valid_params[pname]) > 3 and valid_params[pname][3] is not None:
                     converter = __class__.type_converters[valid_params[pname][3]]
                     new_pval = getattr(cfg[sectionname], converter)(pname)
 
+                # given value needs
                 if len(valid_params[pname]) > 4:
                     choices = valid_params[pname][4]
                     if new_pval not in choices:
                         ok = False
                         msg = "Error in file {} in section '{}': invalid value of parameter" \
                               " '{}': must be {} but got '{}'"
-                        print(msg.format(self.filepath, sectionname, pname, choices, new_pval),
-                              file=sys.stdout)
+                        msg = msg.format(self.filepath, sectionname, pname, choices, new_pval)
+                        print(msg, file=sys.stdout)
 
+                # Store parameter in its value in our own structure like this:
+                #   params[sectionname][parameter name] = value
+                self.params.setdefault(_sectionname, {})[pname.lower()] = new_pval
 
             else:
                 ok = False
