@@ -63,8 +63,9 @@ class Config(object):
                 ),
                 "optimizer" : (
                     "optimizer to use.",
-                    "adam", None,
-                    # TODO: add choices from keras
+                    "adam", None, None,
+                    ['adadelta', 'adagrad', 'adam', 'adamax', 'nadam', 'rmsprop',
+                     'sgd', 'tfoptimizer']
                 ),
                 "max_epoch" : (
                     "number of training epochs.",
