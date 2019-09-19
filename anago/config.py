@@ -182,20 +182,21 @@ class Config(object):
     def get(self, *args):
         """
         Retrieve value of given parameter.
-        Examples:
-          get(section, param)
-          get(param)
 
         Args:
-           *args: is a list of either one ot two values (strings).
-               If there are two values, then the 1st one is section name and the 2nd one
-               is parameter name.
-               If there is only one value, it is parameter name.
+            *args: is a list of either one ot two values (strings).
+                If there are two values, then the 1st one is section name and
+                the 2nd one is parameter name.
+                If there is only one value, it is parameter name.
 
         Returns:
-           the value of the parameter if the parameter was found or None otherwise.
-           exists with error if paramater is ambiguous and exists in more than one
-           section.
+            the value of the parameter if the parameter was found or None otherwise.
+            exists with error if paramater is ambiguous and exists in more than one
+            section.
+
+        Examples:
+            get(section, param)
+            get(param)
         """
         # TODO: should retrieve from my own storage (that also contains type-converted
         # values and maybe some defaults like MODEL_COMPONENTS)
