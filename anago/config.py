@@ -281,13 +281,14 @@ class Config(object):
             if pname in valid_params:
                 new_pval = pval
 
-                # given value needs to be converted to given type
-                if len(valid_params[pname]) > 3 and valid_params[pname][3] is not None:
+                needs_type_conversion = len(valid_params[pname]) > 3 and \
+                                        valid_params[pname][3] is not None
+                if pval and needs_type_conversion:
                     converter = __class__.type_converters[valid_params[pname][3]]
                     new_pval = getattr(cfg[sectionname], converter)(pname)
 
-                # given value needs
-                if len(valid_params[pname]) > 4:
+                # check constraints on allowed values
+                if pval and len(valid_params[pname]) > 4:
                     choices = valid_params[pname][4]
                     if new_pval not in choices:
                         ok = False
@@ -298,7 +299,8 @@ class Config(object):
 
                 # Store parameter in its value in our own structure like this:
                 #   params[sectionname][parameter name] = value
-                self.params.setdefault(_sectionname, {})[pname.lower()] = new_pval
+                if ok:
+                    self.params.setdefault(_sectionname, {})[pname.lower()] = new_pval
 
             else:
                 ok = False
