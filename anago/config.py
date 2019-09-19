@@ -218,6 +218,54 @@ class Config(object):
                 val = None
         return val
 
+    def set(self, *args):
+        """
+        Set value of given parameter.
+
+        Args:
+            *args: is a list of either 2 or 3 items, such that:
+                #1 (string): [OPTIONAL] section name
+                #2 (string): parameter name
+                #3         : new value to be set
+
+        Returns:
+            Old value.
+            An error will be thrown if something is wrong.
+
+        Examples:
+            set('training', 'loss', 'mse')
+            set('loss', 'mse')
+
+        """
+
+        if len(args) == 3:
+            section, param, val = args
+        elif len(args) == 2:
+            param, val = args
+            sections = [ sname for sname,sparams in __class__.allitems.items()
+                         if param.lower() in sparams[1]]
+            if len(sections) == 0:
+                print("Error: parameter '{}' is not known to configuration".format(param))
+                exit(25)
+            elif len(sections) == 1:
+                section = sections[0]
+            elif len(sections) > 1:
+                msg = "Ambiguous parameter '{}', it exists in several sections: {}"
+                print(msg.format(param, sections), file=sys.stderr)
+                exit(24)
+        else:
+            myname = sys._getframe().f_code.co_name
+            msg = "{}() takes 2 or 3 arguments, {} was/were given".format(myname, len(args))
+            raise TypeError(msg)
+
+        section = section.lower()
+        param = param.lower()
+
+        oldval = self.get(section, param)
+        self.params.setdefault(section, {})[param] = val
+
+        return oldval
+
     def _create_config_parser(self):
         parser = configparser.ConfigParser(
             allow_no_value = True,
