@@ -209,7 +209,7 @@ class Config(object):
             vals = [(sname, sparams[p]) for sname,sparams in self.params.items()
                     if p in sparams]
             if len(vals) == 1:
-                val = vals[0]
+                val = vals[0][1]
             elif len(vals) > 1:
                 msg = "Ambiguous parameter '{}', it exists in several sections: {}"
                 print(msg.format(p, vals), file=sys.stderr)
