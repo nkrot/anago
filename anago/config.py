@@ -116,7 +116,7 @@ class Config(object):
                     100, None, 'int'),
                 "use_glove_emb" : (
                     "use pretrained GloVe embeddings (path to the file should be configured"
-                    " elsewere)",
+                    " elsewere. Plus word_emb_size may need to be set correspondingly.)",
                     "no", None, 'bool')
             })],
 
@@ -181,23 +181,40 @@ class Config(object):
 
     def get(self, *args):
         """
-        TODO: add good description with examples &&&
-        Look for given key in given section or, if section not give, look in all sections
-        If several keys exist, return a list of values
+        Retrieve value of given parameter.
         Examples:
           get(section, param)
           get(param)
+
+        Args:
+           *args: is a list of either one ot two values (strings).
+               If there are two values, then the 1st one is section name and the 2nd one
+               is parameter name.
+               If there is only one value, it is parameter name.
+
+        Returns:
+           the value of the parameter if the parameter was found or None otherwise.
+           exists with error if paramater is ambiguous and exists in more than one
+           section.
         """
         # TODO: should retrieve from my own storage (that also contains type-converted
         # values and maybe some defaults like MODEL_COMPONENTS)
         if len(args) == 2:
-            val = self.params.get(args[0],{}).get(args[1], None)
+            s,p = args
+            val = self.params.get(s,{}).get(p, None)
+
         elif len(args) == 1:
-            val = [sparams[args[0]] for sparams in self.params.values() if args[0] in sparams]
-            if len(val) == 0:
+            p = args[0].lower()
+            vals = [(sname, sparams[p]) for sname,sparams in self.params.items()
+                    if p in sparams]
+            if len(vals) == 1:
+                val = vals[0]
+            elif len(vals) > 1:
+                msg = "Ambiguous parameter '{}', it exists in several sections: {}"
+                print(msg.format(p, vals), file=sys.stderr)
+                exit(23)
+            else:
                 val = None
-            elif len(val) == 1:
-                val = val[0]
         return val
 
     def _create_config_parser(self):
@@ -288,7 +305,7 @@ class Config(object):
                     new_pval = getattr(cfg[sectionname], converter)(pname)
 
                 # check constraints on allowed values
-                if pval and len(valid_params[pname]) > 4:
+                if new_pval and len(valid_params[pname]) > 4:
                     choices = valid_params[pname][4]
                     if new_pval not in choices:
                         ok = False
