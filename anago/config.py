@@ -257,8 +257,17 @@ class Config(object):
             msg = "{}() takes 2 or 3 arguments, {} was/were given".format(myname, len(args))
             raise TypeError(msg)
 
+        if isinstance(val, list):
+            if not self._param_can_be_list(s, p):
+                msg = "Parameter '{}/{}' can not be a list".format(s, p)
+                print(msg, file=sys.stderr)
+                exit(30)
+            val = ", ".join(val)
+        else:
+            val = str(val)
+
         oldval = self._parse_parameter(self.parser, s, p)
-        self.parser.set(s, p, str(val))
+        self.parser.set(s, p, val)
 
         return oldval
 
@@ -278,6 +287,26 @@ class Config(object):
             self.parser.write(file)
 
         return True
+
+    def _param_can_be_list(self, sectionname, paramname):
+        """
+        Check if given parameter in given section is allowed to be a list.
+
+        Returns:
+            True or False
+        """
+
+        ok = False
+        sname = sectionname.lower()
+        valid_params = __class__.allitems[sname][1]
+
+        if paramname in valid_params:
+            expected_type = valid_params[paramname][3] \
+                            if len(valid_params[paramname]) > 3 else None
+            if expected_type == 'strlist':
+                ok = True
+
+        return ok
 
     def _create_config_parser(self):
         parser = configparser.ConfigParser(
