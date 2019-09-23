@@ -267,6 +267,25 @@ class Config(object):
             msg = "{}() takes 2 or 3 arguments, {} was/were given".format(myname, len(args))
             raise TypeError(msg)
 
+        # add section if necessary and if it is valid
+        if not self.parser.has_section(s):
+            if self._is_allowed(s):
+                self.parser.add_section(s)
+            else:
+                msg = "Error: section not allowed: {}".format(s)
+                print(msg, file=sys.stderr)
+                exit(32)
+
+        # add parameter if necessary and if it is a valid parameter within
+        # given section.
+        if self._is_allowed(s, p):
+            self.parser.set(s, p, '')
+        else:
+            msg = "Error: Parameter not allowed: {}".format(p)
+            print(msg, file=sys.stderr)
+            exit(33)
+
+        # transform value to string, because ConfigParser wants strings only
         if isinstance(val, list):
             if not self._param_can_be_list(s, p):
                 msg = "Parameter '{}/{}' can not be a list".format(s, p)
@@ -276,6 +295,7 @@ class Config(object):
         else:
             val = str(val)
 
+        # finally, set new value
         oldval = self._parse_parameter(self.parser, s, p)
         self.parser.set(s, p, val)
 
@@ -297,6 +317,24 @@ class Config(object):
             self.parser.write(file)
 
         return True
+
+    def _is_allowed(self, sectionname, paramname=None):
+        """
+        Check if given section and optionally param in this section is/are
+        legal in the configuration.
+
+        Return:
+            True or False
+        """
+
+        sname = sectionname.lower()
+        ok = (sname in __class__.allitems)
+
+        if ok and paramname is not None:
+            pname = paramname.lower()
+            ok = (pname in __class__.allitems[sname][1])
+
+        return ok
 
     def _param_can_be_list(self, sectionname, paramname):
         """
