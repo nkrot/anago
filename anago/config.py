@@ -188,12 +188,13 @@ class Config(object):
 
         Returns:
             the value of the parameter if the parameter was found or None otherwise.
-            exists with error if paramater is ambiguous and exists in more than one
+            The value will be a list if there is more than one value.
+            Exits with error if paramater is ambiguous and exists in more than one
             section.
 
         Examples:
-            >>> get(section, param)
-            >>> get(param)
+            >>> get('training', 'optimizer')
+            >>> get('optimizer')
         """
         val = None
 
@@ -209,6 +210,9 @@ class Config(object):
                 msg = "Ambiguous parameter '{}', it exists in several sections: {}"
                 print(msg.format(p, sections), file=sys.stderr)
                 exit(23)
+
+        if isinstance(val, list) and len(val) == 1:
+            val = val[0]
 
         return val
 
