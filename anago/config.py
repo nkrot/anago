@@ -173,9 +173,6 @@ class Config(object):
             print("")
 
     def __init__(self, fpath=None):
-        # our own structure to store parameters and their values
-        self.params = {}
-
         if fpath is not None:
             self._load_from_file(fpath)
 
@@ -198,24 +195,21 @@ class Config(object):
             get(section, param)
             get(param)
         """
-        # TODO: should retrieve from my own storage (that also contains type-converted
-        # values and maybe some defaults like MODEL_COMPONENTS)
+        val = None
+
         if len(args) == 2:
-            s,p = args
-            val = self.params.get(s,{}).get(p, None)
+            val = self._parse_parameter(self.parser, args[0], args[1])
 
         elif len(args) == 1:
             p = args[0].lower()
-            vals = [(sname, sparams[p]) for sname,sparams in self.params.items()
-                    if p in sparams]
-            if len(vals) == 1:
-                val = vals[0][1]
-            elif len(vals) > 1:
+            sections = [s for s in self.parser.sections() if self.parser.has_option(s, p)]
+            if len(sections) == 1:
+                val = self._parse_parameter(self.parser, sections[0], p)
+            elif len(sections) > 1:
                 msg = "Ambiguous parameter '{}', it exists in several sections: {}"
-                print(msg.format(p, vals), file=sys.stderr)
+                print(msg.format(p, sections), file=sys.stderr)
                 exit(23)
-            else:
-                val = None
+
         return val
 
     def set(self, *args):
@@ -238,33 +232,52 @@ class Config(object):
 
         """
 
-        if len(args) == 3:
-            section, param, val = args
-        elif len(args) == 2:
-            param, val = args
+        if len(args) == 2:
+            # find section where the parameter exists
+            s, p, val = None, args[0], args[1]
             sections = [ sname for sname,sparams in __class__.allitems.items()
-                         if param.lower() in sparams[1]]
-            if len(sections) == 0:
-                print("Error: parameter '{}' is not known to configuration".format(param))
-                exit(25)
-            elif len(sections) == 1:
-                section = sections[0]
+                         if p.lower() in sparams[1]]
+
+            if len(sections) == 1:
+                s = sections[0]
             elif len(sections) > 1:
                 msg = "Ambiguous parameter '{}', it exists in several sections: {}"
-                print(msg.format(param, sections), file=sys.stderr)
+                print(msg.format(p, sections), file=sys.stderr)
+                exit(23)
+            else:
+                msg = "Parameter not found in any section: {}".format(p)
+                print(msg, file=sys.stderr)
                 exit(24)
+
+        elif len(args) == 3:
+            s, p, val = args[0:3]
+
         else:
             myname = sys._getframe().f_code.co_name
             msg = "{}() takes 2 or 3 arguments, {} was/were given".format(myname, len(args))
             raise TypeError(msg)
 
-        section = section.lower()
-        param = param.lower()
-
-        oldval = self.get(section, param)
-        self.params.setdefault(section, {})[param] = val
+        oldval = self._parse_parameter(self.parser, s, p)
+        self.parser.set(s, p, str(val))
 
         return oldval
+
+    def write(self, file=sys.stdout):
+        """
+        Print configuration to given file. Target file can be given as a file-like
+        object ready to writing, or as as string. In the later case, the file will
+        be created, silently overwriting existing file with the same name.
+
+        Returns:
+            True always
+        """
+        if isinstance(file, str):
+            with open(file, "w+") as fd:
+                self.parser.write(fd)
+        else:
+            self.parser.write(file)
+
+        return True
 
     def _create_config_parser(self):
         parser = configparser.ConfigParser(
@@ -272,6 +285,7 @@ class Config(object):
             empty_lines_in_values = True,
             comment_prefixes = ('#'),
             inline_comment_prefixes = ('#'),
+            # interpolation = None,
             converters = { 'strlist' : self._get_string_list }
         )
 
@@ -322,7 +336,9 @@ class Config(object):
         for sectname in cfg.sections():
             _sname = sectname.lower()
             if _sname in __class__.allitems.keys():
-                ok = self._parse_configuration_section(cfg, sectname) and ok
+                for pname in cfg.options(sectname):
+                    ok = self._parse_parameter(cfg, sectname, pname,
+                                               validate=True) and ok
             else:
                 ok = False
                 msg = "Invalid section [{}] in configuration file: '{}'"
@@ -333,46 +349,50 @@ class Config(object):
 
         return ok
 
-    def _parse_configuration_section(self, cfg, sectionname):
+    def _parse_parameter(self, cfg, sectname, pname, validate=False):
         """
-        Retrieve and validate parameters in given section.
+        Retrieve and validate given parameter and its value.
+
+        Returns:
+            True or False in validation mode;
+            otherwise parameter value of correct type if type conversion is
+            applicable.
+
+        TODO: test this method
         """
 
         ok = True
+        pval = None
 
-        _sectionname = sectionname.lower()
-        valid_params = __class__.allitems[_sectionname][1]
+        _sectname = sectname.lower()
+        _valid_params = __class__.allitems[_sectname][1]
 
-        for pname,pval in cfg[sectionname].items():
-            if pname in valid_params:
-                new_pval = pval
+        if pname in _valid_params:
+            pval = cfg.get(sectname, pname)
+            pval = None if len(pval) == 0 else pval
 
-                needs_type_conversion = len(valid_params[pname]) > 3 and \
-                                        valid_params[pname][3] is not None
-                if pval and needs_type_conversion:
-                    converter = __class__.type_converters[valid_params[pname][3]]
-                    new_pval = getattr(cfg[sectionname], converter)(pname)
+            if pval is not None:
 
-                # check constraints on allowed values
-                if new_pval and len(valid_params[pname]) > 4:
-                    choices = valid_params[pname][4]
-                    if new_pval not in choices:
-                        ok = False
-                        msg = "Error in file {} in section '{}': invalid value of parameter" \
-                              " '{}': must be {} but got '{}'"
-                        msg = msg.format(self.filepath, sectionname, pname, choices, new_pval)
-                        print(msg, file=sys.stdout)
+                expected_type = _valid_params[pname][3] \
+                                if len(_valid_params[pname]) > 3 else None
 
-                # Store parameter in its value in our own structure like this:
-                #   params[sectionname][parameter name] = value
-                if ok:
-                    self.params.setdefault(_sectionname, {})[pname.lower()] = new_pval
+                if expected_type is not None:
+                    converter = __class__.type_converters[expected_type]
+                    pval = getattr(cfg[sectname], converter)(pname)
 
-            else:
-                ok = False
-                msg = "Invalid parameter '{}' in section [{}] in configuration file '{}'"
-                print(msg.format(pname, sectionname, self.filepath),
-                      file=sys.stdout)
+                choices = _valid_params[pname][4] \
+                          if len(_valid_params[pname]) > 4 else []
 
-        return ok
+                if len(choices) > 0 and pval not in choices:
+                    ok = False
+                    msg = "Error in file {} in section '{}': invalid value of parameter" \
+                          " '{}': must be {} but got '{}'"
+                    msg = msg.format(self.filepath, sectname, pname, choices, pval)
+                    print(msg, file=sys.stderr)
 
+        else:
+            ok = False
+            msg = "Illegal parameter '{}' in section [{}] in configuration file '{}'"
+            print(msg.format(pname, sectname, self.filepath), file=sys.stderr)
+
+        return ok if validate else pval
