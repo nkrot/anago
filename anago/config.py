@@ -192,8 +192,8 @@ class Config(object):
             section.
 
         Examples:
-            get(section, param)
-            get(param)
+            >>> get(section, param)
+            >>> get(param)
         """
         val = None
 
@@ -220,15 +220,21 @@ class Config(object):
             *args: is a list of either 2 or 3 items, such that:
                 #1 (string): [OPTIONAL] section name
                 #2 (string): parameter name
-                #3         : new value to be set
+                #3         : new value to be set. The value can be a list if
+                             the parameter is allowed to be a list. If needed,
+                             the value can reference another variable using
+                             interpolation syntax: %(other_var)s .
 
         Returns:
             Old value.
             An error will be thrown if something is wrong.
 
         Examples:
-            set('training', 'loss', 'mse')
-            set('loss', 'mse')
+            >>> set('training', 'loss', 'mse')
+            >>> set('loss', 'mse')
+          The following sets value of a parameter that can be list. Plus, it
+          uses interpolation to reference another parameter.
+            >>> set('train_data', ['file1.txt', '%(data_dir)s/file2.txt'])
 
         """
 
