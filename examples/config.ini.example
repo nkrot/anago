@@ -1,0 +1,64 @@
+# TODO:
+# 1. make parser case-insensitive for both section names and options
+# 5. config class must know which of the options are boolean and int and should
+#    perform conversion to the proper type
+# 6. are extra spaces ignored in option names and option values?
+#    is it possible to use a string with a space as a value?
+# 7. any special treatment of paths?
+# 8. does standard config parser class provide serialization as json?
+#
+# NOTES
+# =====
+# 1. Both line and inline comments are allowed. Must start with a hash (#) sign.
+# 2. For assigning a value, either = or : can be used.
+# 3. Interpolation syntax is: %()s, for example:
+#      %(othervar)s/literal
+#    Here, othervar will be replaced with the value of another variable called
+#    othervar. Note presence of s after parenthesis!
+# 4. If a variable takes a boolean value, the following can be used to express
+#      truthness: 1, yes,  true,  on,  enabled
+#      falseness: 0,  no, false, off, disabled
+#    Values are case-insensitive: yes, YES, Yes, yeS have the same meaning.
+# 5. TODO: about whitespaces, when extra spaces are ignored and when not
+# 6. train_data, valid_data and test_data can be comma-separated lists of filenames
+#    train_data : file1, file2, file3...
+# 7. Do not quote values.
+
+[dataset]
+data_dir   : ../path/to/my/datadir
+train_data : %(data_dir)s/train.txt, %(data_dir)s/valid.txt,
+            %(data_dir)s/test.txt
+valid_data : %(data_dir)s/valid testset.txt
+test_data  : %(data_dir)s/test.txt
+
+[model files]
+# TODO: how to name this section?
+# files that constitute a model. produced by the trainer and user by predictor
+model_dir         : /path/to/modeldir
+weights_file      : %(model_dir)s/weights.h5
+params_file       : %(model_dir)s/params.json
+preprocessor_file : %(model_dir)s/preprocessor.pkl
+
+[training]
+loss : categorical_crossentropy
+optimizer : adam
+max_epoch : 15
+batch_size : 32
+checkpoint_path :
+log_dir :
+early_stopping : True
+verbose : 1 # verbosity level: 0,1,2
+
+[model]
+# rename to BiLSTMCRF ???
+char_emb_size : 25
+word_emb_size : 100
+char_lstm_units : 25
+word_lstm_units : 100
+dropout : 0.5
+# originally was no_char_feature:False
+use_char_feature : no # TODO: real value: True
+# originally was no_use_crf : False
+use_crf : true # real value True
+# TODO: what does this parameter mean?
+fc_dim :
