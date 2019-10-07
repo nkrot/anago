@@ -20,7 +20,7 @@ this.save_file_infix    = ".cv.p-"
 this.save_file_basename = "anago"
 this.save_file_ext      = '.tsv'
 
-def _prepare_env_for_saving(path):
+def _prepare_env_for_saving(path, create=True):
     """
     Compute values of variables that will be used when saving data.
     """
@@ -32,7 +32,8 @@ def _prepare_env_for_saving(path):
         dirpath, fname = os.path.split(path)
 
         if len(dirpath) > 0:
-            os.makedirs(dirpath, exist_ok=True)
+            if create:
+                os.makedirs(dirpath, exist_ok=True)
             this.save_dir_name = dirpath
 
         if len(fname) > 0:
@@ -61,7 +62,7 @@ def _opt2path(path, n):
     """
     A helper function to be used only in @plac.annotations
     """
-    _prepare_env_for_saving(path)
+    _prepare_env_for_saving(path, create=False)
     return _get_full_filename(n)
 
 def _save_predictions_to(fname, x, y_true, y_pred):
