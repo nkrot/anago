@@ -24,7 +24,6 @@ def _prepare_env_for_saving(path, create=True):
     """
     Compute values of variables that will be used when saving data.
     """
-    print("We were given: {}".format(path))
 
     if os.path.isdir(path):
         this.save_dir_name = path
