@@ -63,7 +63,7 @@ def evaluate(model_dir,
     # output predictions
     if append:
         common.print_data_and_labels(x, y_true, y_pred)
-    else:
+    elif output:
         common.print_data_and_labels(x, y_pred)
 
     # output scores
