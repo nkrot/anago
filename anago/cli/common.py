@@ -2,6 +2,8 @@
 import os
 import sys
 
+import seqeval.metrics
+
 from ..utils import MODEL_COMPONENTS
 from ..wrapper import Sequence
 
@@ -62,3 +64,22 @@ def print_data_and_labels(x, y1, y2=None, **kwargs):
         for word in sent_words:
             print("\t".join(word), file=fd)
         print(file=fd)
+
+    pass
+
+def collect_scores(y_true, y_pred):
+    """
+    Compute all required scores (as specified in REQUIRED_METRICS)
+    from given ground truth and actual predictions.
+
+    Return
+      A dictionary of the form:
+        { metric_1 : value, metric_2 : value }
+    """
+
+    scores = {}
+    for metric_name,options in REQUIRED_METRICS.items():
+        scoring_method = getattr(seqeval.metrics, metric_name)
+        score = scoring_method(y_true, y_pred, **options)
+        scores[metric_name] = round(score, NUMBER_OF_DECIMALS)
+    return scores
