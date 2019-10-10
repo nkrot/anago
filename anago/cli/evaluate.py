@@ -86,7 +86,8 @@ def evaluate(model_dir,
 
     # the same as the above but more human-friendly
     print("")
-    print(seqeval.metrics.classification_report(y_true, y_pred))
+    print(seqeval.metrics.classification_report(y_true, y_pred,
+                                                digits=common.NUMBER_OF_DECIMALS))
     print("=== End of Statistics ===")
 
     pass
